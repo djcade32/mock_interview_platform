@@ -1,5 +1,6 @@
-// import { CreateAssistantDTO } from "@vapi-ai/web/dist/api";
 // import { z } from "zod";
+
+import { CreateAssistantDTO } from "@vapi-ai/web/dist/api";
 
 export const mappings = {
   "react.js": "react",
@@ -95,6 +96,35 @@ export const mappings = {
   netlify: "netlify",
   vercel: "vercel",
   "aws amplify": "amplify",
+};
+
+export const generator: CreateAssistantDTO = {
+  name: "Interviewer",
+  firstMessage:
+    "Hello {{ username }}! Let's prepare your interview. I'll ask you a few questions and generate a perfect interview just for you. Are you ready?",
+  transcriber: {
+    provider: "deepgram",
+    model: "nova-2",
+    language: "en",
+  },
+  firstMessageMode: "assistant-speaks-first-with-model-generated-message",
+  voice: {
+    provider: "11labs",
+    voiceId: "hannah",
+    stability: 0.4,
+    similarityBoost: 0.8,
+    speed: 0.9,
+    style: 0.5,
+    useSpeakerBoost: true,
+  },
+
+  model: {
+    provider: "vapi",
+    workflowId: process.env.NEXT_PUBLIC_VAPI_WORKFLOW_ID,
+    model: "vapi",
+  },
+  clientMessages: [],
+  serverMessages: [],
 };
 
 // export const interviewer: CreateAssistantDTO = {
