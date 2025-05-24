@@ -1,6 +1,6 @@
 "use client";
 
-import { generator } from "@/constants";
+import { generator, interviewer } from "@/constants";
 import { cn } from "@/lib/utils";
 import { vapi } from "@/lib/vapi.sdk";
 import Image from "next/image";
@@ -20,7 +20,7 @@ interface SavedMessages {
   content: string;
 }
 
-const Agent = ({ userName, userId, type }: AgentProps) => {
+const Agent = ({ userName, userId, type, interviewId, questions }: AgentProps) => {
   const router = useRouter();
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [callStatus, setCallStatus] = useState<CallStatus>(CallStatus.INACTIVE);
@@ -59,25 +59,61 @@ const Agent = ({ userName, userId, type }: AgentProps) => {
   }, []);
 
   useEffect(() => {
-    if (callStatus === CallStatus.FINISHED) router.push("/");
+    if (callStatus === CallStatus.FINISHED) {
+      if (type === "generate") {
+        router.push("/");
+      } else {
+        handleGenerateFeedback(messages);
+      }
+    }
   }, [callStatus, messages, type, userId]);
+
+  const handleGenerateFeedback = async (messages: SavedMessages[]) => {
+    console.log("Generate Feedback here");
+    const { success, id } = {
+      success: true,
+      id: "feedback-id-12345",
+    };
+
+    if (success && id) {
+      router.push(`/interview/${interviewId}/feedback`);
+    } else {
+      console.log("Error saving feedback");
+      router.push("/");
+    }
+  };
 
   const handleCall = async () => {
     setCallStatus(CallStatus.CONNECTING);
 
-    await vapi.start(generator, {
-      clientMessages: [],
-      serverMessages: [],
-      variableValues: {
-        username: userName,
-        userid: userId,
-      },
-    });
+    if (type === "generate") {
+      await vapi.start(generator, {
+        clientMessages: [],
+        serverMessages: [],
+        variableValues: {
+          username: userName,
+          userid: userId,
+        },
+      });
+    } else {
+      let formattedQuestions = "";
+      if (questions && questions.length > 0) {
+        formattedQuestions = questions.map((question) => `- ${question}`).join("\n");
+      }
+
+      await vapi.start(interviewer, {
+        clientMessages: [],
+        serverMessages: [],
+        variableValues: {
+          questions: formattedQuestions,
+        },
+      });
+    }
   };
 
   const handleDisconnect = async () => {
     setCallStatus(CallStatus.FINISHED);
-    await vapi.stop();
+    vapi.stop();
   };
 
   const lastestMessage = messages[messages.length - 1]?.content;
